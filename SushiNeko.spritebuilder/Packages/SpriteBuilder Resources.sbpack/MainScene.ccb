@@ -571,7 +571,7 @@
 				<key>displayName</key>
 				<string>restart</string>
 				<key>memberVarAssignmentName</key>
-				<string>restart</string>
+				<string>restartButton</string>
 				<key>memberVarAssignmentType</key>
 				<integer>1</integer>
 				<key>properties</key>
@@ -912,7 +912,7 @@
 						<key>displayName</key>
 						<string>life</string>
 						<key>memberVarAssignmentName</key>
-						<string></string>
+						<string>lifeBar</string>
 						<key>memberVarAssignmentType</key>
 						<integer>1</integer>
 						<key>properties</key>
