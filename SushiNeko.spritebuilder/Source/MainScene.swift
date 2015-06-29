@@ -53,9 +53,12 @@ class MainScene: CCNode {
         
         return gameState == .GameOver
     }
-    func triggerGameOver(){
+    func triggerGameOver() {
         gameState = .GameOver
-        restartButton.visible = true
+        
+        var gameOverScreen = CCBReader.load("GameOver", owner: self) as! GameOver
+        gameOverScreen.score = score
+        self.addChild(gameOverScreen)
     }
     func restart() {
         var mainScene = CCBReader.load("MainScene") as! MainScene
