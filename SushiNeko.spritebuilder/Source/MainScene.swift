@@ -3,15 +3,19 @@ import Foundation
 enum Side {
     case Left, Right, None
 }
+enum GameState {
+    case Title, Ready, Playing, GameOver
+}
 class MainScene: CCNode {
     weak var character: Character!
     weak var piecesNode : CCNode!
     var pieces: [Piece] = []
     var pieceLastSide: Side = .Left
     var piecesIndex = 0
-    var gameOver = false
+    var gameState : GameState = .Title
     weak var restartButton: CCButton!
     weak var lifeBar: CCSprite!
+    weak var tapButtons: CCNode!
     var timeLeft: Float = 5 {
         didSet {
             timeLeft = max(min(timeLeft, 10), 0)
@@ -42,19 +46,26 @@ class MainScene: CCNode {
         
         if newPiece.side == character.side { triggerGameOver() }
         
-        return gameOver
+        return gameState == .GameOver
     }
     func triggerGameOver(){
-        gameOver = true
+        gameState = .GameOver
         restartButton.visible = true
     }
     func restart() {
-        var scene = CCBReader.loadAsScene("MainScene")
-        CCDirector.sharedDirector().presentScene(scene)
-     
+        var mainScene = CCBReader.load("MainScene") as! MainScene
+        mainScene.ready()
+        
+        var scene = CCScene()
+        scene.addChild(mainScene)
+        
+        var transition = CCTransition(fadeWithDuration: 0.3)
+        
+        CCDirector.sharedDirector().presentScene(scene, withTransition: transition)
     }
     override func touchBegan(touch: CCTouch!, withEvent event: CCTouchEvent!) {
-        if gameOver { return }
+        if gameState == .GameOver || gameState == .Title { return }
+        if gameState == .Ready { start() }
         let half = CCDirector.sharedDirector().viewSize().width/2
         let touch = touch.locationInWorld().x
         if touch<half {
@@ -66,6 +77,11 @@ class MainScene: CCNode {
         if isGameOver() { return }
 
         stepTower()
+    }
+    func start(){
+        gameState = .Playing
+        tapButtons.runAction(CCActionFadeOut(duration: 0.2))
+
     }
     func stepTower(){
         var piece = pieces[piecesIndex]
@@ -81,10 +97,19 @@ class MainScene: CCNode {
 
     }
     override func update(delta: CCTime) {
-        if gameOver { return }
+        if gameState != .Playing { return }
         timeLeft -= Float(delta)
         if timeLeft == 0 {
             triggerGameOver()
         }
+    }
+    func ready() {
+        gameState = .Ready
+        
+        self.animationManager.runAnimationsForSequenceNamed("Ready")
+        
+        tapButtons.cascadeOpacityEnabled = true
+        tapButtons.opacity = 0.0
+        tapButtons.runAction(CCActionFadeIn(duration: 0.2))
     }
 }
