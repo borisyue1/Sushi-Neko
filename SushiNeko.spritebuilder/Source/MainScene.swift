@@ -16,6 +16,8 @@ class MainScene: CCNode {
     weak var restartButton: CCButton!
     weak var lifeBar: CCSprite!
     weak var tapButtons: CCNode!
+    var addPiecePosition: CGPoint?
+
     var timeLeft: Float = 5 {
         didSet {
             timeLeft = max(min(timeLeft, 10), 0)
@@ -28,7 +30,10 @@ class MainScene: CCNode {
             scoreLabel.string = "\(score)"
         }
     }
-    
+    override func onEnter() {
+        super.onEnter()
+        addPiecePosition = piecesNode.positionInPoints
+    }
     func didLoadFromCCB(){
         userInteractionEnabled = true
         for var s = 0; s<10; ++s {
@@ -63,6 +68,7 @@ class MainScene: CCNode {
         
         CCDirector.sharedDirector().presentScene(scene, withTransition: transition)
     }
+    
     override func touchBegan(touch: CCTouch!, withEvent event: CCTouchEvent!) {
         if gameState == .GameOver || gameState == .Title { return }
         if gameState == .Ready { start() }
@@ -75,8 +81,19 @@ class MainScene: CCNode {
             character.right()
         }
         if isGameOver() { return }
+        character.tap()
 
         stepTower()
+    }
+    func addHitPiece(obstacleSide: Side) {
+        var flyingPiece = CCBReader.load("Piece") as! Piece
+        flyingPiece.position = addPiecePosition!
+        
+        var animationName = character.side == .Left ? "fromLeft" : "fromRight"
+        flyingPiece.animationManager.runAnimationsForSequenceNamed(animationName)
+        flyingPiece.side = obstacleSide
+        
+        self.addChild(flyingPiece)
     }
     func start(){
         gameState = .Playing
@@ -85,11 +102,13 @@ class MainScene: CCNode {
     }
     func stepTower(){
         var piece = pieces[piecesIndex]
+        addHitPiece(piece.side)
         var yDiff = piece.contentSize.height * 10
         piece.position = ccpAdd(piece.position, CGPoint(x: 0, y: yDiff))
         piece.zOrder += 1
         pieceLastSide = piece.setObstacle(pieceLastSide)
-        piecesNode.position = ccpSub(piecesNode.position, CGPoint(x: 0, y: piece.contentSize.height))
+        var movePiecesDown = CCActionMoveBy(duration: 0.15, position: CGPoint(x: 0, y: -piece.contentSize.height))
+        piecesNode.runAction(movePiecesDown)
         piecesIndex = (piecesIndex + 1) % 10
         if isGameOver() { return }
         timeLeft = timeLeft + 0.25
